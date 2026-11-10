@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>말랑말랑 31개월 낱말 사운드북</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Jua&family=Gamja+Flower&display=swap');
+
+    * {
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+    }
+
+    body {
+      font-family: 'Jua', cursive, sans-serif;
+      background: #fdfbf7;
+      background-image:
+        radial-gradient(#fde047 15%, transparent 16%),
+        radial-gradient(#93c5fd 15%, transparent 16%);
+      background-size: 60px 60px;
+      background-position: 0 0, 30px 30px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .font-gamja {
+      font-family: 'Gamja Flower', cursive;
+    }
+
+    /* 구름형 대형 헤더 */
+    .cloud-header {
+      background: white;
+      border-radius: 50px;
+      box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.25), inset 0 -4px 0 #fde047;
+    }
+
+    /* 통통 튀는 말랑말랑 카드 스타일 */
+    .jelly-card {
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border-radius: 2.25rem;
+      box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08), 0 6px 0 0 rgba(0, 0, 0, 0.06);
+    }
+    .jelly-card:hover {
+      transform: translateY(-4px) scale(1.02);
+    }
+    .jelly-card:active {
+      transform: translateY(4px) scale(0.93) rotate(-1deg);
+      box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 반짝이 효과 캔버스 */
+    #sparkleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 50;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-between min-h-screen p-4 md:p-6 text-gray-800 relative">
+
+  <!-- 별가루 효과 캔버스 -->
+  <canvas id="sparkleCanvas"></canvas>
+
+  <main class="w-full max-w-2xl mx-auto flex flex-col items-center z-10">
+
+    <!-- 상단 퐁퐁 구름 헤더 -->
+    <header class="cloud-header px-8 py-4 my-2 text-center border-4 border-amber-300 relative transform -rotate-1">
+      <h1 class="text-3xl md:text-4xl text-amber-500 font-extrabold tracking-wide flex items-center justify-center gap-2">
+        <span>🎈</span> 말랑말랑 낱말 사운드북 <span>🧸</span>
+      </h1>
+      <p id="subInstruction" class="text-slate-500 font-gamja text-2xl mt-1">
+        카드를 콕! 누르면 재미있는 소리가 나요!
+      </p>
+    </header>
+
+    <!-- 카테고리 & 퀴즈 모드 전환 버튼 -->
+    <div class="flex flex-wrap justify-center gap-3 my-3 w-full max-w-md">
+    <button id="tabAll" onclick="switchCategory('all')"
+      class="flex-1 py-3 px-4 rounded-3xl text-xl font-bold border-b-4 transition-all shadow-md bg-amber-400 border-amber-600 text-white active:translate-y-1 flex items-center justify-center gap-1">
+      <span>🎲</span> 모두 섞기
+    </button>
+
+    <button id="tabVehicles" onclick="switchCategory('vehicles')"
+      class="py-3 px-4 rounded-3xl text-xl font-bold border-b-4 transition-all shadow-md bg-white border-sky-300 text-sky-600 active:translate-y-1 flex items-center justify-center gap-1">
+      <span>🚒</span> 탈것
+    </button>
+
+    <button id="tabAnimals" onclick="switchCategory('animals')"
+      class="py-3 px-4 rounded-3xl text-xl font-bold border-b-4 transition-all shadow-md bg-white border-emerald-300 text-emerald-600 active:translate-y-1 flex items-center justify-center gap-1">
+      <span>🦁</span> 동물
+    </button>
+
+    <button id="tabFruits" onclick="switchCategory('fruits')"
+      class="py-3 px-4 rounded-3xl text-xl font-bold border-b-4 transition-all shadow-md bg-white border-rose-300 text-rose-600 active:translate-y-1 flex items-center justify-center gap-1">
+      <span>🍎</span> 과일
+    </button>
+
+    <button id="tabMusic" onclick="switchCategory('music')"
+      class="py-3 px-4 rounded-3xl text-xl font-bold border-b-4 transition-all shadow-md bg-white border-purple-300 text-purple-600 active:translate-y-1 flex items-center justify-center gap-1">
+      <span>🎸</span> 악기
+    </button>
+
+    <button id="btnQuiz" onclick="toggleQuizMode()"
+      class="py-3 px-5 rounded-3xl text-xl font-bold border-b-4 transition-all shadow-md bg-pink-400 border-pink-600 text-white flex items-center justify-center gap-1 active:translate-y-1">
+      <span>❓</span> 퀴즈
+    </button>
+  </div>
+
+    <!-- 퀴즈 전용 안내 메시지 -->
+    <div id="quizBanner" class="hidden w-full bg-gradient-to-r from-pink-400 via-amber-400 to-sky-400 text-white p-4 rounded-3xl text-center shadow-lg my-2 border-4 border-white animate-bounce">
+      <p id="quizText" class="text-2xl font-bold">"소방차"는 어디 있을까?</p>
+      <button onclick="askQuizQuestion()" class="mt-2 bg-white text-pink-500 px-5 py-1.5 rounded-full text-lg font-bold shadow hover:bg-pink-50 transition-all">
+        📢 소리 다시 듣기
+      </button>
+    </div>
+
+    <!-- 사운드 카드 그리드 -->
+    <div id="cardGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 w-full my-3">
+      <!-- JavaScript로 dynamic 생성 -->
+    </div>
+
+  </main>
+
+  <footer class="text-center text-slate-400 z-10 my-2">
+    <p class="font-gamja text-xl text-amber-600/70">💛 엄마 아빠와 함께 단어를 따라 불러보아요 💛</p>
+    <details class="font-gamja text-lg text-slate-500 mt-1">
+      <summary class="cursor-pointer">소리 출처</summary>
+      <ul id="soundCredits" class="mt-1"></ul>
+    </details>
+  </footer>
+
+  <script>
+    // Web Audio API를 활용한 효과음 신디사이저 (진짜 소리 연출)
+    let audioCtx = null;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    // 터치 기기에서는 pointerdown으로 소리를 깨울 수 없어서 click에서 활성화합니다
+    document.addEventListener('click', () => {
+      getAudioContext();
+    });
+
+    // 첫 터치 때 음성 안내도 미리 깨워 둡니다 (녹음이 끝난 뒤 말하기 위해 필요)
+    document.addEventListener('click', () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+      }
+    }, { once: true });
+
+    // 부드럽고 다정한 한국어 여성 음성 탐색 및 설정
+    let selectedFemaleVoice = null;
+
+    function initBestFemaleVoice() {
+      if ('speechSynthesis' in window) {
+        const voices = window.speechSynthesis.getVoices();
+        const krVoices = voices.filter(v => v.lang.includes('ko'));
+
+        // 부드럽고 자연스러운 한국어 여성 음성 우선 탐색
+        selectedFemaleVoice = krVoices.find(v =>
+          v.name.includes('Google') ||
+          v.name.includes('Yuna') ||
+          v.name.includes('Sun-Hi') ||
+          v.name.includes('Heami') ||
+          v.name.toLowerCase().includes('female')
+        ) || krVoices[0] || null;
+      }
+    }
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = initBestFemaleVoice;
+      initBestFemaleVoice();
+    }
+
+    // 실제 녹음 소리 목록 (위키미디어 공용). 여기에 없는 카드는 기존 합성음을 씁니다.
+    // maxSec: 녹음이 길 때 이 시간까지만 재생
+    const COMMONS_MEDIA = 'https://upload.wikimedia.org/wikipedia/commons/';
+    const REAL_SOUNDS = {
+      '강아지': { file: 'a/a2/Barking_of_a_dog.ogg', maxSec: 3, author: 'Amada44', license: 'CC BY-SA 3.0' },
+      '고양이': { file: '6/62/Meow.ogg', maxSec: 2, author: 'Dcrosby', license: 'CC BY-SA 3.0' },
+      '사자': { file: '7/7d/Lion_raring-sound1TamilNadu178.ogg', maxSec: 4, author: '작성자 표기 없음', license: 'Public domain' },
+      '돼지': { file: 'a/ac/Pig_grunt_-_Erdie.ogg', maxSec: 2, author: 'erdie', license: 'CC BY 3.0' },
+      '오리': { file: 'f/fa/Anas_platyrhynchos_-_Mallard_-_XC62258.ogg', maxSec: 3.5, author: 'Jonathon Jongsma', license: 'CC BY-SA 3.0' },
+      '소방차': { file: '4/47/WWS_Fireenginesiren.ogg', maxSec: 4, author: 'Work With Sounds / Konrad Gutkowski', license: 'CC BY 4.0' },
+      '경찰차': { file: '7/76/WWS_Policecarsiren.ogg', maxSec: 4, author: 'Work With Sounds / Konrad Gutkowski', license: 'CC BY 4.0' },
+      '굴착기': { file: '5/54/A_small_orange_excavator_shoveling_gravel.ogg', maxSec: 4, author: 'T.Voekler', license: 'CC BY-SA 3.0' },
+      '기차': { file: '2/22/WWS_Steamlocomotive.ogg', maxSec: 4, author: 'Work With Sounds / Konrad Gutkowski', license: 'CC BY 4.0' },
+      '버스': { file: '8/8c/Car_Horn.wav', maxSec: 2, author: '15HPanska_Ruttner_Jan', license: 'CC0' },
+      '실로폰': { file: 'b/bd/Xylophone_jingle.wav', maxSec: 4.5, author: 'spazzo_1493', license: 'CC BY 3.0' },
+      '드럼': { file: '8/8d/Drum_beat.ogg', maxSec: 4, author: 'Mattgirling', license: 'CC BY-SA 3.0' }
+    };
+
+    function realSoundUrl(info) {
+      const fileName = info.file.split('/').pop();
+      return `${COMMONS_MEDIA}transcoded/${info.file}/${fileName}.mp3`;
+    }
+
+    const clipCache = {};
+
+    function getClip(name) {
+      if (!clipCache[name]) {
+        const clip = new Audio();
+        clip.preload = 'auto';
+        clip.src = realSoundUrl(REAL_SOUNDS[name]);
+        clipCache[name] = clip;
+      }
+      return clipCache[name];
+    }
+
+    let playbackToken = 0;
+    let playbackTimer = null;
+    let activeClip = null;
+
+    // 재생 중인 녹음, 대기 중인 안내, 음성을 모두 멈춥니다 (카드를 연달아 눌러도 겹치지 않게)
+    function stopPlayback() {
+      playbackToken++;
+      clearTimeout(playbackTimer);
+      if (activeClip) {
+        activeClip.pause();
+        activeClip.onended = null;
+        activeClip.onplaying = null;
+        activeClip.onerror = null;
+        activeClip = null;
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    function playSynthSound(item, onDone) {
+      const token = playbackToken;
+      if (SoundEffects[item.soundType]) {
+        SoundEffects[item.soundType]();
+      }
+      playbackTimer = setTimeout(() => {
+        if (token === playbackToken) onDone();
+      }, 350);
+    }
+
+    // 실제 녹음을 재생하고, 끝나면 onDone을 부릅니다. 못 불러오면 합성음으로 대체합니다.
+    function playItemSound(item, onDone) {
+      stopPlayback();
+      const info = REAL_SOUNDS[item.name];
+      if (!info) {
+        playSynthSound(item, onDone);
+        return;
+      }
+
+      const token = playbackToken;
+      const clip = getClip(item.name);
+      let started = false;
+      let finished = false;
+
+      const finish = () => {
+        if (finished || token !== playbackToken) return;
+        finished = true;
+        clearTimeout(playbackTimer);
+        clip.pause();
+        activeClip = null;
+        onDone();
+      };
+
+      const useSynthInstead = () => {
+        if (started || finished || token !== playbackToken) return;
+        finished = true;
+        clearTimeout(playbackTimer);
+        clip.pause();
+        activeClip = null;
+        playSynthSound(item, onDone);
+      };
+
+      const fadeOutAndFinish = () => {
+        let volume = 1;
+        const fade = setInterval(() => {
+          volume -= 0.1;
+          if (volume <= 0 || finished || token !== playbackToken) {
+            clearInterval(fade);
+            finish();
+            return;
+          }
+          clip.volume = volume;
+        }, 30);
+      };
+
+      activeClip = clip;
+      clip.volume = 1;
+      try {
+        clip.currentTime = 0;
+      } catch (err) {
+        // 아직 불러오는 중이면 처음부터 재생됩니다
+      }
+      clip.onended = finish;
+      clip.onerror = useSynthInstead;
+      clip.onplaying = () => {
+        if (started) return;
+        started = true;
+        clearTimeout(playbackTimer);
+        playbackTimer = setTimeout(fadeOutAndFinish, info.maxSec * 1000);
+      };
+      playbackTimer = setTimeout(useSynthInstead, 1500);
+      clip.play().catch(useSynthInstead);
+    }
+
+    // 추가된 효과음 신디사이저 함수들 (악기, 자연 등)
+    const SoundEffects = {
+      // 1. 소방차 (실제 사이렌 삐뽀~ 삐뽀~)
+      siren1: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+
+        const now = ctx.currentTime;
+        osc.frequency.setValueAtTime(650, now);
+        osc.frequency.linearRampToValueAtTime(950, now + 0.3);
+        osc.frequency.linearRampToValueAtTime(650, now + 0.6);
+        osc.frequency.linearRampToValueAtTime(950, now + 0.9);
+        osc.frequency.linearRampToValueAtTime(650, now + 1.2);
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 1.2);
+      },
+
+      // 2. 경찰차 (삐용 삐용)
+      siren2: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.linearRampToValueAtTime(1200, now + 0.25);
+        osc.frequency.linearRampToValueAtTime(800, now + 0.5);
+        osc.frequency.linearRampToValueAtTime(1200, now + 0.75);
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.75);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.75);
+      },
+
+      // 3. 엔진 부릉 부릉
+      vroom: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(80, now);
+        osc.frequency.linearRampToValueAtTime(220, now + 0.3);
+        osc.frequency.linearRampToValueAtTime(120, now + 0.6);
+
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.6);
+      },
+
+      // 4. 기차 칙칙폭폭
+      train: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        [0, 0.2, 0.4].forEach(delay => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(400, now + delay);
+          osc.frequency.exponentialRampToValueAtTime(150, now + delay + 0.12);
+
+          gain.gain.setValueAtTime(0.2, now + delay);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.12);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + delay);
+          osc.stop(now + delay + 0.12);
+        });
+      },
+
+      // 5. 비행기 슈웅~
+      airplane: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.6);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 1.2);
+
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 1.2);
+      },
+
+      // 6. 진짜 강아지 짖는 소리 (노이즈 버스트 + 복합 파형 멍! 멍!)
+      dogBark: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+
+        const barks = [0, 0.25]; // 멍! 멍! 2번 연속 짖기
+
+        barks.forEach(delay => {
+          const now = ctx.currentTime + delay;
+
+          // 1) 강아지 목소리 주파수 톤
+          const osc = ctx.createOscillator();
+          const oscGain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(500, now);
+          osc.frequency.exponentialRampToValueAtTime(180, now + 0.15);
+
+          oscGain.gain.setValueAtTime(0.6, now);
+          oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+          // 2) 개 성대 노이즈 공명
+          const bufferSize = Math.floor(ctx.sampleRate * 0.15);
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * 0.5;
+          }
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(800, now);
+          filter.Q.value = 2.5;
+
+          const noiseGain = ctx.createGain();
+          noiseGain.gain.setValueAtTime(0.4, now);
+          noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+          osc.connect(oscGain);
+          oscGain.connect(ctx.destination);
+
+          noise.connect(filter);
+          filter.connect(noiseGain);
+          noiseGain.connect(ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.16);
+          noise.start(now);
+          noise.stop(now + 0.15);
+        });
+      },
+
+      // 7. 실제 고양이 야옹~ (부드러운 피치 스윕 + 고주파 울림)
+      catMeow: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(550, now);
+        osc.frequency.linearRampToValueAtTime(820, now + 0.25);
+        osc.frequency.exponentialRampToValueAtTime(420, now + 0.7);
+
+        gain.gain.setValueAtTime(0.01, now);
+        gain.gain.linearRampToValueAtTime(0.35, now + 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.7);
+      },
+
+      // 8. 실제 사자/호랑이/공룡 어흥! (저음 진동 공명)
+      lionRoar: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+
+        const bufferSize = ctx.sampleRate * 0.8;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(180, now);
+        filter.frequency.linearRampToValueAtTime(450, now + 0.3);
+        filter.frequency.linearRampToValueAtTime(120, now + 0.8);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        noise.start(now);
+        noise.stop(now + 0.8);
+      },
+
+      // 9. 돼지 꿀꿀! (두 번의 콧소리 꿀! 꿀!)
+      pigGrunt: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        [0, 0.2].forEach(delay => {
+          const now = ctx.currentTime + delay;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(160, now);
+          osc.frequency.linearRampToValueAtTime(120, now + 0.12);
+
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        });
+      },
+
+      // 10. 오리 꽥꽥!
+      duckQuack: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        [0, 0.22].forEach(delay => {
+          const now = ctx.currentTime + delay;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(200, now + 0.15);
+
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.15);
+        });
+      },
+
+      // 11. 팡파르 (정답 축하 소리)
+      fanfare: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.18, ctx.currentTime + idx * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + idx * 0.1 + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.1);
+          osc.stop(ctx.currentTime + idx * 0.1 + 0.35);
+        });
+      },
+
+      // 12. 실로폰 / 마림바 띵~
+      xylophone: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        [523.25, 659.25, 783.99].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.4, now + idx * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.4);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.12);
+          osc.stop(now + idx * 0.12 + 0.4);
+        });
+      },
+
+      // 13. 드럼 둥둥!
+      drum: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.15);
+        gain.gain.setValueAtTime(0.6, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      },
+
+      // 14. 바삭 사과 아삭!
+      crunch: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const bufferSize = ctx.sampleRate * 0.12;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+        noise.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start(now);
+        noise.stop(now + 0.12);
+      },
+
+      // 15. 별/마법 반짝~
+      twinkle: () => {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        [1046.50, 1318.51, 1567.98, 2093.00].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.3);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.3);
+        });
+      }
+    };
+
+    // 대폭 확장된 풍부한 낱말 아이템 목록 (총 24종)
+    const items = [
+      // 탈것
+      { id: 1, category: 'vehicles', name: '소방차', emoji: '🚒', soundType: 'siren1', soundText: '우와! 소방차! 삐뽀삐뽀 불을 끄러 출동해요!', bg: 'bg-red-50 border-red-200 text-red-500' },
+      { id: 2, category: 'vehicles', name: '경찰차', emoji: '🚓', soundType: 'siren2', soundText: '경찰차! 삐용삐용 멋지게 출동!', bg: 'bg-sky-50 border-sky-200 text-sky-500' },
+      { id: 3, category: 'vehicles', name: '굴착기', emoji: '🚜', soundType: 'vroom', soundText: '굴착기! 붕붕, 땅을 으쌰으쌰 파요!', bg: 'bg-amber-50 border-amber-200 text-amber-600' },
+      { id: 4, category: 'vehicles', name: '기차', emoji: '🚂', soundType: 'train', soundText: '칙칙폭폭! 신나는 기차가 출발합니다!', bg: 'bg-emerald-50 border-emerald-200 text-emerald-600' },
+      { id: 5, category: 'vehicles', name: '비행기', emoji: '✈️', soundType: 'airplane', soundText: '슈웅~! 비행기가 하늘 높이 날아가요!', bg: 'bg-indigo-50 border-indigo-200 text-indigo-500' },
+      { id: 6, category: 'vehicles', name: '버스', emoji: '🚌', soundType: 'vroom', soundText: '빵빵! 버스 타고 어디로 갈까요?', bg: 'bg-yellow-50 border-yellow-200 text-yellow-600' },
+
+      // 동물
+      { id: 7, category: 'animals', name: '강아지', emoji: '🐶', soundType: 'dogBark', soundText: '귀여운 강아지! 멍멍! 반가워요!', bg: 'bg-orange-50 border-orange-200 text-orange-500' },
+      { id: 8, category: 'animals', name: '고양이', emoji: '🐱', soundType: 'catMeow', soundText: '예쁜 고양이! 야옹~ 부드럽게 쓰다듬어줘요!', bg: 'bg-rose-50 border-rose-200 text-rose-400' },
+      { id: 9, category: 'animals', name: '사자', emoji: '🦁', soundType: 'lionRoar', soundText: '우와! 멋진 사자! 어흥! 숲속의 왕이에요!', bg: 'bg-amber-50 border-amber-300 text-amber-600' },
+      { id: 10, category: 'animals', name: '돼지', emoji: '🐷', soundType: 'pigGrunt', soundText: '분홍 돼지! 꿀꿀! 맛있게 먹어요!', bg: 'bg-pink-50 border-pink-200 text-pink-500' },
+      { id: 11, category: 'animals', name: '오리', emoji: '🦆', soundType: 'duckQuack', soundText: '오리! 꽥꽥! 연못에서 헤엄쳐요!', bg: 'bg-teal-50 border-teal-200 text-teal-600' },
+      { id: 12, category: 'animals', name: '공룡', emoji: '🦖', soundType: 'lionRoar', soundText: '커다란 공룡! 쿵쿵! 어흥!', bg: 'bg-green-50 border-green-200 text-green-600' },
+
+      // 과일
+      { id: 13, category: 'fruits', name: '사과', emoji: '🍎', soundType: 'crunch', soundText: '빨간 사과! 아삭아삭 새콤달콤 맛있어요!', bg: 'bg-red-50 border-red-200 text-red-500' },
+      { id: 14, category: 'fruits', name: '바나나', emoji: '🍌', soundType: 'twinkle', soundText: '노란 바나나! 껍질을 톡 까서 냠냠!', bg: 'bg-yellow-50 border-yellow-200 text-yellow-500' },
+      { id: 15, category: 'fruits', name: '수박', emoji: '🍉', soundType: 'crunch', soundText: '시원한 수박! 달콤하고 시원해요!', bg: 'bg-emerald-50 border-emerald-200 text-emerald-500' },
+      { id: 16, category: 'fruits', name: '딸기', emoji: '🍓', soundType: 'twinkle', soundText: '상큼한 딸기! 냠냠 달콤해요!', bg: 'bg-rose-50 border-rose-200 text-rose-500' },
+      { id: 17, category: 'fruits', name: '당근', emoji: '🥕', soundType: 'crunch', soundText: '주황색 당근! 토끼가 좋아해요!', bg: 'bg-orange-50 border-orange-200 text-orange-500' },
+      { id: 18, category: 'fruits', name: '포도', emoji: '🍇', soundType: 'twinkle', soundText: '보라색 포도! 한 알씩 쏙쏙!', bg: 'bg-purple-50 border-purple-200 text-purple-500' },
+
+      // 악기 & 자연
+      { id: 19, category: 'music', name: '실로폰', emoji: '🎹', soundType: 'xylophone', soundText: '맑고 예쁜 실로폰 소리! 띵동댕!', bg: 'bg-blue-50 border-blue-200 text-blue-500' },
+      { id: 20, category: 'music', name: '드럼', emoji: '🥁', soundType: 'drum', soundText: '신나는 드럼! 둥둥둥 쿵쾅!', bg: 'bg-red-50 border-red-200 text-red-500' },
+      { id: 21, category: 'music', name: '반짝별', emoji: '⭐', soundType: 'twinkle', soundText: '반짝반짝 예쁜 별! 밤하늘에 빛나요!', bg: 'bg-amber-50 border-amber-200 text-amber-500' },
+      { id: 22, category: 'music', name: '무지개', emoji: '🌈', soundType: 'twinkle', soundText: '알록달록 아름다운 무지개예요!', bg: 'bg-sky-50 border-sky-200 text-sky-400' },
+      { id: 23, category: 'music', name: '해님', emoji: '☀️', soundType: 'twinkle', soundText: '따뜻한 해님! 방긋 인사해요!', bg: 'bg-yellow-50 border-yellow-200 text-yellow-600' },
+      { id: 24, category: 'music', name: '꽃', emoji: '🌸', soundType: 'twinkle', soundText: '예쁜 꽃이 피었어요! 향기가 솔솔~', bg: 'bg-pink-50 border-pink-200 text-pink-400' }
+    ];
+
+    let currentCategory = 'all';
+    let displayItems = [];
+    let isQuizMode = false;
+    let quizTargetItem = null;
+
+    // 카드 렌더링 함수
+    function renderCards() {
+      const grid = document.getElementById('cardGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      if (currentCategory === 'all') {
+        // '모두 섞기' 모드: 전체 24개 중 랜덤으로 6개 선택
+        const shuffled = [...items].sort(() => 0.5 - Math.random());
+        displayItems = shuffled.slice(0, 6);
+      } else {
+        displayItems = items.filter(item => item.category === currentCategory);
+      }
+
+      displayItems.forEach(item => {
+        const card = document.createElement('div');
+        card.className = `jelly-card ${item.bg} border-4 p-4 md:p-6 flex flex-col items-center justify-center cursor-pointer select-none aspect-square text-center`;
+
+        card.innerHTML = `
+          <div class="text-6xl sm:text-7xl md:text-8xl mb-2 transform transition-transform duration-200 hover:scale-110 pointer-events-none">${item.emoji}</div>
+          <div class="text-2xl sm:text-3xl font-extrabold tracking-wide pointer-events-none">${item.name}</div>
+        `;
+
+        // 반짝이는 누르는 즉시, 소리는 click에서 (터치 기기의 자동재생 차단 때문)
+        card.addEventListener('pointerdown', () => {
+          const rect = card.getBoundingClientRect();
+          createSparkles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        });
+        card.addEventListener('click', () => onCardClick(item));
+        grid.appendChild(card);
+      });
+    }
+
+    // 카드 클릭 핸들러
+    function onCardClick(item) {
+      if (isQuizMode) {
+        if (item.id === quizTargetItem.id) {
+          SoundEffects.fanfare();
+          if (typeof confetti === 'function') {
+            confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+          }
+          speak(`정답이에요! 참 잘했어요! ${item.name}!`);
+          setTimeout(() => nextQuiz(), 2000);
+        } else {
+          speak(`아쉬워요, 다시 찾아볼까요? ${quizTargetItem.name}는 어디 있을까?`);
+        }
+      } else {
+        // 소리가 끝난 뒤에 안내 음성이 나옵니다
+        playItemSound(item, () => speak(item.soundText));
+      }
+    }
+
+    // 부드러운 TTS 음성 재생
+    function speak(text) {
+      stopPlayback();
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ko-KR';
+        utterance.rate = 0.85;
+        utterance.pitch = 1.35;
+        if (selectedFemaleVoice) {
+          utterance.voice = selectedFemaleVoice;
+        }
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    // 별가루 입자 효과
+    function createSparkles(x, y) {
+      const canvas = document.getElementById('sparkleCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles = [];
+      const colors = ['#fde047', '#93c5fd', '#f472b6', '#34d399', '#fbbf24'];
+
+      for (let i = 0; i < 15; i++) {
+        particles.push({
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8 - 2,
+          radius: Math.random() * 6 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          alpha: 1
+        });
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let alive = false;
+        particles.forEach(p => {
+          if (p.alpha > 0) {
+            alive = true;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.alpha -= 0.03;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = Math.max(0, p.alpha);
+            ctx.fill();
+          }
+        });
+        if (alive) requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    // 퀴즈 모드 토글
+    function toggleQuizMode() {
+      isQuizMode = !isQuizMode;
+      const banner = document.getElementById('quizBanner');
+      const quizBtn = document.getElementById('btnQuiz');
+
+      if (isQuizMode) {
+        banner.classList.remove('hidden');
+        quizBtn.classList.add('ring-4', 'ring-pink-300');
+        nextQuiz();
+      } else {
+        banner.classList.add('hidden');
+        quizBtn.classList.remove('ring-4', 'ring-pink-300');
+        speak('낱말 사운드북 모드로 돌아왔어요!');
+      }
+    }
+
+    // 카테고리 바꾸기
+    function switchCategory(cat) {
+      currentCategory = cat;
+      const tabs = ['tabAll', 'tabVehicles', 'tabAnimals', 'tabFruits', 'tabMusic'];
+
+      tabs.forEach(tId => {
+        const btn = document.getElementById(tId);
+        if (!btn) return;
+        btn.className = "py-3 px-4 rounded-3xl text-xl font-bold border-b-4 transition-all shadow-md bg-white text-gray-600 active:translate-y-1 flex items-center justify-center gap-1";
+      });
+
+      const activeBtn = document.getElementById('tab' + cat.charAt(0).toUpperCase() + cat.slice(1));
+      if (activeBtn) {
+        activeBtn.className = "py-3 px-4 rounded-3xl text-xl font-bold border-b-4 transition-all shadow-md bg-amber-400 border-amber-600 text-white active:translate-y-1 flex items-center justify-center gap-1 ring-2 ring-amber-200";
+      }
+
+      renderCards();
+      if (isQuizMode) nextQuiz();
+      else speak(cat === 'all' ? '짠! 새로운 카드로 바뀌었어요!' : '재미있는 카드를 눌러보세요!');
+    }
+
+    function nextQuiz() {
+      if (displayItems.length === 0) return;
+      quizTargetItem = displayItems[Math.floor(Math.random() * displayItems.length)];
+      document.getElementById('quizText').innerText = `"${quizTargetItem.name}" (은)는 어디 있을까?`;
+      askQuizQuestion();
+    }
+
+    function askQuizQuestion() {
+      if (quizTargetItem) {
+        speak(`${quizTargetItem.name}는 어디 있을까? 찾아보세요!`);
+      }
+    }
+
+    // 소리 저작자 표시 (CC 라이선스 조건)
+    function renderSoundCredits() {
+      const list = document.getElementById('soundCredits');
+      if (!list) return;
+      Object.entries(REAL_SOUNDS).forEach(([name, info]) => {
+        const row = document.createElement('li');
+        const link = document.createElement('a');
+        link.href = `https://commons.wikimedia.org/wiki/File:${info.file.split('/').pop()}`;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.className = 'underline';
+        link.textContent = name;
+        row.appendChild(link);
+        row.appendChild(document.createTextNode(` · ${info.author} · ${info.license}`));
+        list.appendChild(row);
+      });
+    }
+
+    window.onload = () => {
+      initBestFemaleVoice();
+      renderCards();
+      renderSoundCredits();
+      Object.keys(REAL_SOUNDS).forEach(getClip);
+    };
+  </script>
+</body>
+</html>
